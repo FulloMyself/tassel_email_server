@@ -28,14 +28,26 @@ const transporter = nodemailer.createTransport({
 app.post("/send-order", async (req, res) => {
   const { items, total, email } = req.body;
   try {
+    // 1. Send order notification to business
     await transporter.sendMail({
       from: `"Tassel Shop" <${process.env.SMTP_USER}>`,
-      to: process.env.ORDER_RECEIVER, // Your business email
+      to: process.env.ORDER_RECEIVER,
       subject: "New Tassel Shop Order",
       text: `Order from: ${email}\n\nItems:\n${items
         .map((i) => `${i.name} x${i.quantity} (R${i.price})`)
         .join("\n")}\n\nTotal: R${total}`,
     });
+
+    // 2. Send confirmation to customer
+    await transporter.sendMail({
+      from: `"Tassel Shop" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Your Tassel Shop Order Confirmation",
+      text: `Thank you for your order!\n\nOrder details:\n${items
+        .map((i) => `${i.name} x${i.quantity} (R${i.price})`)
+        .join("\n")}\n\nTotal: R${total}\n\nWe'll be in touch soon!`,
+    });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to send email" });
