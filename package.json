@@ -1,0 +1,27 @@
+{
+  "name": "tassel_email_server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FulloMyself/tassel_email_server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FulloMyself/tassel_email_server/issues"
+  },
+  "homepage": "https://github.com/FulloMyself/tassel_email_server#readme",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0",
+    "nodemailer": "^7.0.4"
+  }
+}
