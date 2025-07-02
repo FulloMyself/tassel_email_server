@@ -10,7 +10,7 @@ app.use(cors({
     "http://localhost:5173",
     "https://FulloMyself.github.io",
     "https://FulloMyself.github.io/Tassel_Shop/"
-  ]
+  ], methods: ["POST"],
 }));
 app.use(express.json());
 
