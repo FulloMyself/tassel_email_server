@@ -8,8 +8,8 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://FulloMyself.github.io",
-    "https://FulloMyself.github.io/Tassel_Shop/"
+    "https://fulloMyself.github.io",
+    "https://fulloMyself.github.io/Tassel_Shop/"
   ], methods: ["POST"],
 }));
 app.use(express.json());
