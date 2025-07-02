@@ -27,6 +27,9 @@ const transporter = nodemailer.createTransport({
 
 app.post("/send-order", async (req, res) => {
   const { items, total, email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Customer email is required." });
+  }
   try {
     // 1. Send order notification to business
     await transporter.sendMail({
