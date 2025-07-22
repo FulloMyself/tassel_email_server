@@ -57,6 +57,38 @@ app.post("/send-order", async (req, res) => {
   }
 });
 
+app.post("/send-gift-inquiry", async (req, res) => {
+  const { name, email, phone, message } = req.body;
+
+  if (!email || !email.includes("@")) {
+    return res.status(400).json({ error: "A valid email is required." });
+  }
+
+  try {
+    // ✅ Send email to Tassel
+    await transporter.sendMail({
+      from: `"Tassel Gifts" <${process.env.SMTP_USER}>`,
+      to: process.env.ORDER_RECEIVER,
+      subject: "New Tassel Gift Inquiry",
+      text: `Gift Inquiry from ${name}\n\nEmail: ${email}\nPhone: ${phone}\nMessage:\n${message}`,
+    });
+
+    // ✅ Confirmation to customer
+    await transporter.sendMail({
+      from: `"Tassel Gifts" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Tassel Gift Inquiry Confirmation",
+      text: `Hi ${name},\n\nThank you for reaching out about Tassel Beauty's gift options! We will contact you soon.\n\nYour message:\n${message}\n\nRegards,\nTassel Beauty Team`,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Gift Inquiry Error:", err);
+    res.status(500).json({ error: "Failed to send inquiry" });
+  }
+});
+
+
 // ✅ Handle massage bookings
 app.post("/send-booking", async (req, res) => {
   const { name, email, phone, service, date, time } = req.body;
