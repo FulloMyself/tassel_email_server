@@ -88,61 +88,63 @@ app.post("/send-gift-inquiry", async (req, res) => {
   }
 });
 
-
 app.post("/send-massage-booking", async (req, res) => {
-  const { name, email, phone, service, date, time } = req.body;
+  const { forWhom, services, selectedTime, email } = req.body;
 
-  if (!email || !email.includes("@")) {
-    return res.status(400).json({ error: "A valid email is required." });
+  if (!email || !services || services.length === 0) {
+    return res.status(400).json({ error: "All booking details are required." });
   }
 
   try {
-    // ✅ Send booking notification to Tassel Beauty
+    const serviceList = services
+      .map((s) => `${s.name} (R${s.price}) - ${s.duration} mins`)
+      .join("\n");
+
+    // ✅ Email to Tassel
     await transporter.sendMail({
-      from: `"Tassel Massage Bookings" <${process.env.SMTP_USER}>`,
+      from: `"Tassel Bookings" <${process.env.SMTP_USER}>`,
       to: process.env.ORDER_RECEIVER,
       subject: "New Massage Booking Request",
-      text: `
-New Massage Booking:
+      text: `Booking from: ${email}
 
-Name: ${name}
-Email: ${email}
-Phone: ${phone}
+For: ${forWhom === "others" ? "Myself & others" : "Just myself"}
+Selected Time: ${selectedTime || "Not selected yet"}
 
-Service: ${service}
-Date: ${date}
-Time: ${time}
-      `,
+Services:
+${serviceList}
+
+Please confirm with the customer as soon as possible.`,
     });
 
-    // ✅ Confirmation to customer
+    // ✅ Confirmation email to customer
     await transporter.sendMail({
-      from: `"Tassel Massage Bookings" <${process.env.SMTP_USER}>`,
+      from: `"Tassel Beauty & Wellness" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: "Your Tassel Massage Booking Request",
-      text: `
-Hi ${name},
+      subject: "Tassel Beauty Massage Booking Confirmation",
+      text: `Hi ${email.split("@")[0]},
 
 Thank you for booking with Tassel Beauty & Wellness Studio!
 
 Booking details:
-Service: ${service}
-Date: ${date}
-Time: ${time}
+${services
+  .map((s) => `• ${s.name} (${s.duration} mins) - R${s.price}`)
+  .join("\n")}
+Time: ${selectedTime || "We'll confirm your time shortly"}
 
 We'll confirm availability and get back to you shortly.
 
 Warm regards,
 Tassel Beauty Team
-      `,
+`,
     });
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Massage Booking Error:", err);
-    res.status(500).json({ error: "Failed to send booking request" });
+    console.error("Booking email failed:", err);
+    res.status(500).json({ error: "Failed to send booking email." });
   }
 });
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Email server running on ${PORT}`));
