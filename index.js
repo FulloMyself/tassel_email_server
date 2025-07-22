@@ -57,5 +57,53 @@ app.post("/send-order", async (req, res) => {
   }
 });
 
+// ✅ Handle massage bookings
+app.post("/send-booking", async (req, res) => {
+  const { name, email, phone, service, date, time } = req.body;
+
+  if (!email || !name || !service) {
+    return res.status(400).json({ error: "Missing required booking details." });
+  }
+
+  try {
+    // 1. Send booking notification to the business
+    await transporter.sendMail({
+      from: `"Tassel Bookings" <${process.env.SMTP_USER}>`,
+      to: process.env.ORDER_RECEIVER, // ✅ Same email receiver as orders
+      subject: "New Massage Booking",
+      html: `
+        <h3>New Massage Booking</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Service:</strong> ${service}</p>
+        <p><strong>Date:</strong> ${date}</p>
+        <p><strong>Time:</strong> ${time}</p>
+      `,
+    });
+
+    // 2. Confirmation to the customer
+    await transporter.sendMail({
+      from: `"Tassel Bookings" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Your Massage Booking Confirmation",
+      html: `
+        <p>Hi ${name},</p>
+        <p>Thank you for booking a massage with Tassel Beauty & Wellness Studio.</p>
+        <p><strong>Service:</strong> ${service}<br/>
+        <strong>Date:</strong> ${date}<br/>
+        <strong>Time:</strong> ${time}</p>
+        <p>We look forward to seeing you!</p>
+      `,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to send booking email" });
+  }
+});
+
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Email server running on ${PORT}`));
