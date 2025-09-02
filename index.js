@@ -8,7 +8,8 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://fullomyself.github.io"
+    "https://fullomyself.github.io",
+    "https://tasselgroup.co.za"
   ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"]
