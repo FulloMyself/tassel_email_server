@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
-const { vouchers } = require("./vouchers");
+const { vouchers } = require("../tassel_email_server/vouchers");
 
 
 require("dotenv").config();
