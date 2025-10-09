@@ -35,17 +35,22 @@ app.post("/send-order", async (req, res) => {
     return res.status(400).json({ error: "Customer email is required." });
   }
 
+  if (!items || items.length === 0) {
+    return res.status(400).json({ error: "No items in order." });
+  }
+
   try {
     // 1️⃣ Format items nicely
     const itemsText = items
-      .map(
-        (i) =>
-          `${i.name} x${i.quantity} (R${(
-            (i.salePrice && i.salePrice > 0 && i.salePrice < i.price
-              ? i.salePrice
-              : i.price) * i.quantity
-          ).toFixed(2)})`
-      )
+      .map((i) => {
+        const itemPrice =
+          i.salePrice && i.salePrice > 0 && i.salePrice < i.price
+            ? i.salePrice
+            : i.price;
+        return `${i.name} x${i.quantity} (R${(itemPrice * i.quantity).toFixed(
+          2
+        )})`;
+      })
       .join("\n");
 
     // 2️⃣ Delivery info
@@ -56,32 +61,33 @@ app.post("/send-order", async (req, res) => {
       deliveryText = "\n\nCustomer will collect order in-store.";
     }
 
-    // 3️⃣ Send order notification to business
+    // 3️⃣ Email to business
     await transporter.sendMail({
       from: `"Tassel Shop" <${process.env.SMTP_USER}>`,
       to: process.env.ORDER_RECEIVER,
-      subject: "New Tassel Shop Order",
-      text: `Order from: ${email}\n\nItems:\n${itemsText}\n\nTotal: R${total.toFixed(
-        2
-      )}${deliveryText}`,
+      subject: "🛍️ New Tassel Shop Order",
+      text: `New order received from: ${email}\n\nItems:\n${itemsText}\n\nTotal: R${Number(
+        total
+      ).toFixed(2)}${deliveryText}`,
     });
 
-    // 4️⃣ Send confirmation to customer
+    // 4️⃣ Confirmation to customer
     await transporter.sendMail({
       from: `"Tassel Shop" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: "Your Tassel Shop Order Confirmation",
-      text: `Thank you for your order!\n\nOrder details:\n${itemsText}\n\nTotal: R${total.toFixed(
-        2
-      )}${deliveryText}\n\nWe'll be in touch soon!`,
+      subject: "🪷 Your Tassel Shop Order Confirmation",
+      text: `Thank you for your order!\n\nOrder details:\n${itemsText}\n\nTotal: R${Number(
+        total
+      ).toFixed(2)}${deliveryText}\n\nWe'll be in touch soon to confirm collection or delivery.\n\nWith love,\nTassel Beauty 🌸`,
     });
 
     res.json({ success: true });
   } catch (err) {
     console.error("Send order error:", err);
-    res.status(500).json({ error: "Failed to send email" });
+    res.status(500).json({ error: "Failed to send email." });
   }
 });
+
 
 
 app.post("/send-gift-inquiry", async (req, res) => {
