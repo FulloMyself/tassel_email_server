@@ -29,64 +29,63 @@ const transporter = nodemailer.createTransport({
 });
 
 app.post("/send-order", async (req, res) => {
-  const { items, total, email, deliveryOption, deliveryDetails } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ error: "Customer email is required." });
-  }
-
-  if (!items || items.length === 0) {
-    return res.status(400).json({ error: "No items in order." });
-  }
-
   try {
-    // 1️⃣ Format items nicely
+    const { items, total, email, deliveryOption, deliveryDetails } = req.body;
+
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ error: "Customer email is required." });
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "No items in order." });
+    }
+
+    // ✅ Format item list
     const itemsText = items
       .map((i) => {
-        const itemPrice =
+        const unitPrice =
           i.salePrice && i.salePrice > 0 && i.salePrice < i.price
             ? i.salePrice
             : i.price;
-        return `${i.name} x${i.quantity} (R${(itemPrice * i.quantity).toFixed(
-          2
-        )})`;
+        return `${i.name} x${i.quantity} (R${(unitPrice * i.quantity).toFixed(2)})`;
       })
       .join("\n");
 
-    // 2️⃣ Delivery info
-    let deliveryText = "";
+    // ✅ Normalize delivery info
+    let deliveryText = "\n\nCustomer will collect order in-store.";
     if (deliveryOption === "delivery" && deliveryDetails) {
-      deliveryText = `\n\nDelivery Details:\nName: ${deliveryDetails.name}\nPhone: ${deliveryDetails.phone}\nEmail: ${deliveryDetails.email}\nAddress: ${deliveryDetails.address}`;
-    } else {
-      deliveryText = "\n\nCustomer will collect order in-store.";
+      const { name = "N/A", phone = "N/A", email: dEmail = "N/A", address = "N/A" } =
+        deliveryDetails;
+      deliveryText = `\n\nDelivery Details:\nName: ${name}\nPhone: ${phone}\nEmail: ${dEmail}\nAddress: ${address}`;
     }
 
-    // 3️⃣ Email to business
+    // ✅ Compose messages
+    const plainText = `New order received from: ${email}\n\nItems:\n${itemsText}\n\nTotal: R${Number(
+      total
+    ).toFixed(2)}${deliveryText}`;
+
+    // ✅ Send emails
     await transporter.sendMail({
       from: `"Tassel Shop" <${process.env.SMTP_USER}>`,
       to: process.env.ORDER_RECEIVER,
       subject: "🛍️ New Tassel Shop Order",
-      text: `New order received from: ${email}\n\nItems:\n${itemsText}\n\nTotal: R${Number(
-        total
-      ).toFixed(2)}${deliveryText}`,
+      text: plainText,
     });
 
-    // 4️⃣ Confirmation to customer
     await transporter.sendMail({
       from: `"Tassel Shop" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "🪷 Your Tassel Shop Order Confirmation",
-      text: `Thank you for your order!\n\nOrder details:\n${itemsText}\n\nTotal: R${Number(
-        total
-      ).toFixed(2)}${deliveryText}\n\nWe'll be in touch soon to confirm collection or delivery.\n\nWith love,\nTassel Beauty 🌸`,
+      text: `Thank you for your order!\n\n${plainText}\n\nWe'll be in touch soon.\n\nWith love,\nTassel Beauty 🌸`,
     });
 
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (err) {
     console.error("Send order error:", err);
-    res.status(500).json({ error: "Failed to send email." });
+    return res.status(500).json({ error: "Failed to send email." });
   }
 });
+
 
 
 
