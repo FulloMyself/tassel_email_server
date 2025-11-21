@@ -14,4 +14,12 @@ exports.vouchers = [
     description: "R50 off your total order",
     active: true,
   },
+
+   {
+    code: "28BLACKFRIDAYYY50",
+    type: "percent",
+    value: 50,
+    description: "50% off your Cart Total",
+    active: true,
+  },
 ];
